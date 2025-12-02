@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FormEvent } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import z from "zod";
 
 const schema = z.object({
@@ -39,12 +39,12 @@ export default function Login() {
       password,
       redirect: false,
     });
-
+    console.log(result);
     if (result?.error) {
       return;
     }
 
-    router.push("/");
+    router.push("/profile");
   };
 
   return (
