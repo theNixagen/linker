@@ -1,0 +1,11 @@
+services:
+  postgres:
+    container_name: postgres_linker
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: linker
+    ports:
+      - "5432:5432"
+    restart: always
