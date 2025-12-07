@@ -35,11 +35,13 @@ func main() {
 	}
 
 	r := chi.NewMux()
+	jwtSecret := os.Getenv("JWT_SECRET")
 
 	api := api.API{
 		Router:      r,
 		Validator:   validator.New(validator.WithRequiredStructEnabled()),
-		UserService: services.NewUserService(pool),
+		UserService: services.NewUserService(pool, jwtSecret),
+		JwtSecret:   jwtSecret,
 	}
 
 	server := &http.Server{

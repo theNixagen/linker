@@ -9,6 +9,11 @@ services:
     ports:
       - "5432:5432"
     restart: always
+  redis:
+    image: redis
+    command: redis-server
+    ports:
+      - "6379:6379"
   minio:
     image: minio/minio
     container_name: minio-linker

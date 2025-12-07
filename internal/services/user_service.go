@@ -3,7 +3,10 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,18 +16,21 @@ import (
 )
 
 var (
-	ErrDuplicatedEmail = errors.New("this email is already used")
+	ErrDuplicatedEmail    = errors.New("this email is already used")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 type UserService struct {
-	pool    *pgxpool.Pool
-	queries *db.Queries
+	pool      *pgxpool.Pool
+	queries   *db.Queries
+	jwtSecret string
 }
 
-func NewUserService(pool *pgxpool.Pool) UserService {
+func NewUserService(pool *pgxpool.Pool, jwtSecret string) UserService {
 	return UserService{
-		pool:    pool,
-		queries: db.New(pool),
+		pool:      pool,
+		queries:   db.New(pool),
+		jwtSecret: jwtSecret,
 	}
 }
 
@@ -52,4 +58,39 @@ func (us *UserService) CreateUser(ctx context.Context, user user.CreateUser) (in
 	}
 
 	return int(id), nil
+}
+
+func (us *UserService) AuthUser(ctx context.Context, email, password string) (string, error) {
+	user, err := us.queries.GetUserByEmail(ctx, email)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrInvalidCredentials
+		}
+		return "", err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return "", ErrInvalidCredentials
+		}
+		return "", err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":             user.ID,
+		"name":           user.Name,
+		"email":          user.Email,
+		"bio":            user.Bio,
+		"profilePicture": user.ProfilePicture,
+		"bannerPicture":  user.BannerPicture,
+		"exp":            time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(us.jwtSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

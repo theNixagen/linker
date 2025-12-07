@@ -10,4 +10,5 @@ type API struct {
 	Router      *chi.Mux
 	Validator   *validator.Validate
 	UserService services.UserService
+	JwtSecret   string
 }
