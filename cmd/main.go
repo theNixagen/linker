@@ -23,11 +23,11 @@ func main() {
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
-		os.Getenv("FINANSMART_DATABASE_USER"),
-		os.Getenv("FINANSMART_DATABASE_PASSWORD"),
-		os.Getenv("FINANSMART_DATABASE_HOST"),
-		os.Getenv("FINANSMART_DATABASE_PORT"),
-		os.Getenv("FINANSMART_DATABASE_NAME"),
+		os.Getenv("LINKER_DATABASE_USER"),
+		os.Getenv("LINKER_DATABASE_PASSWORD"),
+		os.Getenv("LINKER_DATABASE_HOST"),
+		os.Getenv("LINKER_DATABASE_PORT"),
+		os.Getenv("LINKER_DATABASE_NAME"),
 	))
 
 	if err != nil {
