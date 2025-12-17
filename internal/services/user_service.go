@@ -18,6 +18,7 @@ import (
 var (
 	ErrDuplicatedEmail    = errors.New("this email is already used")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserNotFound       = errors.New("user not found")
 )
 
 type UserService struct {
@@ -93,4 +94,27 @@ func (us *UserService) AuthUser(ctx context.Context, email, password string) (st
 	}
 
 	return tokenString, nil
+}
+
+func (us *UserService) GetUser(ctx context.Context, email string) (user.GetUser, error) {
+	userFound, err := us.queries.GetUserByEmail(ctx, email)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return user.GetUser{}, ErrUserNotFound
+		}
+		return user.GetUser{}, err
+	}
+
+	userDto := user.GetUser{
+		ID:             userFound.ID,
+		Email:          userFound.Email,
+		CreatedAt:      userFound.CreatedAt.Time,
+		ProfilePicture: userFound.ProfilePicture,
+		Bio:            userFound.Bio,
+		BannerPicture:  userFound.BannerPicture,
+		Name:           userFound.Name.String,
+	}
+
+	return userDto, nil
 }

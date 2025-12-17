@@ -1,8 +1,6 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -19,9 +17,7 @@ func (api API) BindRoutes() {
 	r.Group(func(r chi.Router) {
 		r.Use(api.AuthMiddleware)
 		r.Route("/profile", func(r chi.Router) {
-			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte("Hello, World!"))
-			})
+			r.Get("/", api.GetProfile)
 		})
 	})
 }

@@ -36,6 +36,12 @@ func main() {
 
 	r := chi.NewMux()
 	jwtSecret := os.Getenv("JWT_SECRET")
+	bucket_name := os.Getenv("BUCKET")
+	minio_url := os.Getenv("MINIO_URL")
+	minio_user := os.Getenv("MINIO_USER")
+	minio_passwd := os.Getenv("MINIO_PASSWORD")
+	file_service := services.NewFileService(bucket_name, minio_url, minio_user, minio_passwd)
+	file_service.CreateBucketIfNotExists(ctx)
 
 	api := api.API{
 		Router:      r,
