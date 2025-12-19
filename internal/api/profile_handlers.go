@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/theNixagen/linker/internal/domain/user"
 	"github.com/theNixagen/linker/internal/services"
 )
 
@@ -38,5 +39,43 @@ func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
-	return
+}
+
+func (api *API) UpdateBio(w http.ResponseWriter, r *http.Request) {
+	userClaims, ok := GetTokenClaims(r.Context())
+
+	var req user.UpdateBioRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "unprocessable entity",
+		})
+		return
+	}
+
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "user unauthorized",
+		})
+		return
+	}
+
+	if err := api.UserService.UpdateBio(r.Context(), userClaims.Email, req.Bio); err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "user not found",
+			})
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "user not found",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -79,13 +79,10 @@ func (us *UserService) AuthUser(ctx context.Context, email, password string) (st
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":             user.ID,
-		"name":           user.Name,
-		"email":          user.Email,
-		"bio":            user.Bio,
-		"profilePicture": user.ProfilePicture,
-		"bannerPicture":  user.BannerPicture,
-		"exp":            time.Now().Add(time.Hour * 24).Unix(),
+		"id":    user.ID,
+		"name":  user.Name,
+		"email": user.Email,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(us.jwtSecret))
@@ -117,4 +114,20 @@ func (us *UserService) GetUser(ctx context.Context, email string) (user.GetUser,
 	}
 
 	return userDto, nil
+}
+
+func (us *UserService) UpdateBio(ctx context.Context, email, bio string) error {
+	err := us.queries.UpdateBio(ctx, db.UpdateBioParams{
+		Email: email,
+		Bio:   bio,
+	})
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+
+	return nil
 }

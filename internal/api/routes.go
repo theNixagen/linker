@@ -18,6 +18,7 @@ func (api API) BindRoutes() {
 		r.Use(api.AuthMiddleware)
 		r.Route("/profile", func(r chi.Router) {
 			r.Get("/", api.GetProfile)
+			r.Put("/", api.UpdateBio)
 		})
 	})
 }

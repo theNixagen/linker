@@ -47,3 +47,45 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	)
 	return i, err
 }
+
+const updateBannerPhoto = `-- name: UpdateBannerPhoto :exec
+UPDATE users set banner_picture = $1 where email = $2
+`
+
+type UpdateBannerPhotoParams struct {
+	BannerPicture string
+	Email         string
+}
+
+func (q *Queries) UpdateBannerPhoto(ctx context.Context, arg UpdateBannerPhotoParams) error {
+	_, err := q.db.Exec(ctx, updateBannerPhoto, arg.BannerPicture, arg.Email)
+	return err
+}
+
+const updateBio = `-- name: UpdateBio :exec
+UPDATE users set bio = $1 where email = $2
+`
+
+type UpdateBioParams struct {
+	Bio   string
+	Email string
+}
+
+func (q *Queries) UpdateBio(ctx context.Context, arg UpdateBioParams) error {
+	_, err := q.db.Exec(ctx, updateBio, arg.Bio, arg.Email)
+	return err
+}
+
+const updateProfilePhoto = `-- name: UpdateProfilePhoto :exec
+UPDATE users set profile_picture = $1 where email = $2
+`
+
+type UpdateProfilePhotoParams struct {
+	ProfilePicture string
+	Email          string
+}
+
+func (q *Queries) UpdateProfilePhoto(ctx context.Context, arg UpdateProfilePhotoParams) error {
+	_, err := q.db.Exec(ctx, updateProfilePhoto, arg.ProfilePicture, arg.Email)
+	return err
+}
