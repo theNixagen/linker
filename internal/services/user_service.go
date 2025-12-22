@@ -19,6 +19,7 @@ var (
 	ErrDuplicatedEmail    = errors.New("this email is already used")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserNotFound       = errors.New("user not found")
+	ErrLinksNotFound      = errors.New("Links not found")
 )
 
 type UserService struct {
@@ -171,4 +172,51 @@ func (us *UserService) UploadBanner(ctx context.Context, username, objectName st
 		return err
 	}
 	return nil
+}
+
+func (us *UserService) CreateLink(ctx context.Context, username, url, title, description string) error {
+	user, err := us.queries.GetUserByUsername(ctx, pgtype.Text{
+		String: username,
+		Valid:  true,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+
+	if err = us.queries.CreateLink(ctx, db.CreateLinkParams{
+		UserID:      user.ID,
+		Url:         url,
+		Title:       title,
+		Description: description,
+	}); err != nil {
+		return nil
+	}
+
+	return nil
+}
+
+func (us *UserService) GetAllLinksFromAUser(ctx context.Context, username string) ([]db.Link, error) {
+	user, err := us.queries.GetUserByUsername(ctx, pgtype.Text{
+		String: username,
+		Valid:  true,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	links, err := us.queries.FindAllLinksFromAUser(ctx, user.ID)
+	if err != nil {
+		if errors.Is(err, ErrLinksNotFound) {
+			return nil, ErrLinksNotFound
+		}
+		return nil, err
+	}
+
+	return links, nil
 }

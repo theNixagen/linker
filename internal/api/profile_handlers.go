@@ -160,3 +160,5 @@ func (api *API) UploadBanner(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (api *API) CreateNewLink
