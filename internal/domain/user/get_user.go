@@ -12,4 +12,5 @@ type GetUser struct {
 	Bio            string    `json:"bio"`
 	BannerPicture  string    `json:"banner_picture"`
 	Name           string    `json:"name"`
+	UserName       string    `json:"username"`
 }

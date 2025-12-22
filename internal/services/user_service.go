@@ -117,6 +117,7 @@ func (us *UserService) GetUser(ctx context.Context, username string) (user.GetUs
 		Bio:            userFound.Bio,
 		BannerPicture:  userFound.BannerPicture,
 		Name:           userFound.Name.String,
+		UserName:       userFound.Username.String,
 	}
 
 	return userDto, nil
