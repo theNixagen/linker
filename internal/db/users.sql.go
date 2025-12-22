@@ -12,28 +12,34 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users(id, email, password, name) values(default, $1, $2,$3) RETURNING id
+INSERT INTO users(id, email, password, name, username) values(default, $1, $2,$3, $4) RETURNING id
 `
 
 type CreateUserParams struct {
 	Email    string
 	Password string
 	Name     pgtype.Text
+	Username pgtype.Text
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (int32, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.Password, arg.Name)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Email,
+		arg.Password,
+		arg.Name,
+		arg.Username,
+	)
 	var id int32
 	err := row.Scan(&id)
 	return id, err
 }
 
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password, created_at, profile_picture, bio, banner_picture, name FROM users where email = $1
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, email, password, created_at, profile_picture, bio, banner_picture, name, username FROM users where username = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
+func (q *Queries) GetUserByUsername(ctx context.Context, username pgtype.Text) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -44,48 +50,49 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Bio,
 		&i.BannerPicture,
 		&i.Name,
+		&i.Username,
 	)
 	return i, err
 }
 
 const updateBannerPhoto = `-- name: UpdateBannerPhoto :exec
-UPDATE users set banner_picture = $1 where email = $2
+UPDATE users set banner_picture = $1 where username = $2
 `
 
 type UpdateBannerPhotoParams struct {
 	BannerPicture string
-	Email         string
+	Username      pgtype.Text
 }
 
 func (q *Queries) UpdateBannerPhoto(ctx context.Context, arg UpdateBannerPhotoParams) error {
-	_, err := q.db.Exec(ctx, updateBannerPhoto, arg.BannerPicture, arg.Email)
+	_, err := q.db.Exec(ctx, updateBannerPhoto, arg.BannerPicture, arg.Username)
 	return err
 }
 
 const updateBio = `-- name: UpdateBio :exec
-UPDATE users set bio = $1 where email = $2
+UPDATE users set bio = $1 where username = $2
 `
 
 type UpdateBioParams struct {
-	Bio   string
-	Email string
+	Bio      string
+	Username pgtype.Text
 }
 
 func (q *Queries) UpdateBio(ctx context.Context, arg UpdateBioParams) error {
-	_, err := q.db.Exec(ctx, updateBio, arg.Bio, arg.Email)
+	_, err := q.db.Exec(ctx, updateBio, arg.Bio, arg.Username)
 	return err
 }
 
 const updateProfilePhoto = `-- name: UpdateProfilePhoto :exec
-UPDATE users set profile_picture = $1 where email = $2
+UPDATE users set profile_picture = $1 where username = $2
 `
 
 type UpdateProfilePhotoParams struct {
 	ProfilePicture string
-	Email          string
+	Username       pgtype.Text
 }
 
 func (q *Queries) UpdateProfilePhoto(ctx context.Context, arg UpdateProfilePhotoParams) error {
-	_, err := q.db.Exec(ctx, updateProfilePhoto, arg.ProfilePicture, arg.Email)
+	_, err := q.db.Exec(ctx, updateProfilePhoto, arg.ProfilePicture, arg.Username)
 	return err
 }

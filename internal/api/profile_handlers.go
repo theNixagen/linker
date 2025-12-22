@@ -20,7 +20,7 @@ func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := api.UserService.GetUser(r.Context(), userClaims.Email)
+	user, err := api.UserService.GetUser(r.Context(), userClaims.Username)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
@@ -61,7 +61,7 @@ func (api *API) UpdateBio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := api.UserService.UpdateBio(r.Context(), userClaims.Email, req.Bio); err != nil {
+	if err := api.UserService.UpdateBio(r.Context(), userClaims.Username, req.Bio); err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -107,7 +107,7 @@ func (api *API) UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.UserService.UploadProfilePhoto(r.Context(), claims.Email, info.Key)
+	err = api.UserService.UploadProfilePhoto(r.Context(), claims.Username, info.Key)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
@@ -148,7 +148,7 @@ func (api *API) UploadBanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.UserService.UploadBanner(r.Context(), claims.Email, info.Key)
+	err = api.UserService.UploadBanner(r.Context(), claims.Username, info.Key)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)

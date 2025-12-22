@@ -26,4 +26,5 @@ type User struct {
 	Bio            string
 	BannerPicture  string
 	Name           pgtype.Text
+	Username       pgtype.Text
 }

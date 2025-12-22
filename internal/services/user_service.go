@@ -44,6 +44,7 @@ func (us *UserService) CreateUser(ctx context.Context, user user.CreateUser) (in
 	id, err := us.queries.CreateUser(ctx, db.CreateUserParams{
 		Email:    user.Email,
 		Name:     pgtype.Text{String: user.Name, Valid: true},
+		Username: pgtype.Text{String: user.Username, Valid: true},
 		Password: string(hashedPassword),
 	})
 	if err != nil {
@@ -60,8 +61,11 @@ func (us *UserService) CreateUser(ctx context.Context, user user.CreateUser) (in
 	return int(id), nil
 }
 
-func (us *UserService) AuthUser(ctx context.Context, email, password string) (string, error) {
-	user, err := us.queries.GetUserByEmail(ctx, email)
+func (us *UserService) AuthUser(ctx context.Context, username, password string) (string, error) {
+	user, err := us.queries.GetUserByUsername(ctx, pgtype.Text{
+		String: username,
+		Valid:  true,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", ErrInvalidCredentials
@@ -77,10 +81,11 @@ func (us *UserService) AuthUser(ctx context.Context, email, password string) (st
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.ID,
-		"name":  user.Name,
-		"email": user.Email,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"id":       user.ID,
+		"name":     user.Name,
+		"email":    user.Email,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(us.jwtSecret))
@@ -91,8 +96,11 @@ func (us *UserService) AuthUser(ctx context.Context, email, password string) (st
 	return tokenString, nil
 }
 
-func (us *UserService) GetUser(ctx context.Context, email string) (user.GetUser, error) {
-	userFound, err := us.queries.GetUserByEmail(ctx, email)
+func (us *UserService) GetUser(ctx context.Context, username string) (user.GetUser, error) {
+	userFound, err := us.queries.GetUserByUsername(ctx, pgtype.Text{
+		String: username,
+		Valid:  true,
+	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user.GetUser{}, ErrUserNotFound
@@ -113,10 +121,13 @@ func (us *UserService) GetUser(ctx context.Context, email string) (user.GetUser,
 	return userDto, nil
 }
 
-func (us *UserService) UpdateBio(ctx context.Context, email, bio string) error {
+func (us *UserService) UpdateBio(ctx context.Context, username, bio string) error {
 	err := us.queries.UpdateBio(ctx, db.UpdateBioParams{
-		Email: email,
-		Bio:   bio,
+		Username: pgtype.Text{
+			String: username,
+			Valid:  true,
+		},
+		Bio: bio,
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -128,10 +139,13 @@ func (us *UserService) UpdateBio(ctx context.Context, email, bio string) error {
 	return nil
 }
 
-func (us *UserService) UploadProfilePhoto(ctx context.Context, email, objectName string) error {
+func (us *UserService) UploadProfilePhoto(ctx context.Context, username, objectName string) error {
 	err := us.queries.UpdateProfilePhoto(ctx, db.UpdateProfilePhotoParams{
 		ProfilePicture: objectName,
-		Email:          email,
+		Username: pgtype.Text{
+			String: username,
+			Valid:  true,
+		},
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -142,10 +156,13 @@ func (us *UserService) UploadProfilePhoto(ctx context.Context, email, objectName
 	return nil
 }
 
-func (us *UserService) UploadBanner(ctx context.Context, email, objectName string) error {
+func (us *UserService) UploadBanner(ctx context.Context, username, objectName string) error {
 	err := us.queries.UpdateBannerPhoto(ctx, db.UpdateBannerPhotoParams{
 		BannerPicture: objectName,
-		Email:         email,
+		Username: pgtype.Text{
+			String: username,
+			Valid:  true,
+		},
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

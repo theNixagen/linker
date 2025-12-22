@@ -29,7 +29,6 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := api.UserService.CreateUser(r.Context(), user)
-
 	if err != nil {
 		if errors.Is(err, services.ErrDuplicatedEmail) {
 			w.WriteHeader(http.StatusConflict)
@@ -70,8 +69,7 @@ func (api *API) AuthUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := api.UserService.AuthUser(r.Context(), user.Email, user.Password)
-
+	token, err := api.UserService.AuthUser(r.Context(), user.Username, user.Password)
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidCredentials) {
 			w.WriteHeader(http.StatusUnauthorized)
