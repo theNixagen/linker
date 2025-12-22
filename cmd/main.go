@@ -29,7 +29,6 @@ func main() {
 		os.Getenv("LINKER_DATABASE_PORT"),
 		os.Getenv("LINKER_DATABASE_NAME"),
 	))
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,6 +47,7 @@ func main() {
 		Validator:   validator.New(validator.WithRequiredStructEnabled()),
 		UserService: services.NewUserService(pool, jwtSecret),
 		JwtSecret:   jwtSecret,
+		FileService: file_service,
 	}
 
 	server := &http.Server{

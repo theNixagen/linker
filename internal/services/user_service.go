@@ -46,7 +46,6 @@ func (us *UserService) CreateUser(ctx context.Context, user user.CreateUser) (in
 		Name:     pgtype.Text{String: user.Name, Valid: true},
 		Password: string(hashedPassword),
 	})
-
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -63,7 +62,6 @@ func (us *UserService) CreateUser(ctx context.Context, user user.CreateUser) (in
 
 func (us *UserService) AuthUser(ctx context.Context, email, password string) (string, error) {
 	user, err := us.queries.GetUserByEmail(ctx, email)
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", ErrInvalidCredentials
@@ -95,7 +93,6 @@ func (us *UserService) AuthUser(ctx context.Context, email, password string) (st
 
 func (us *UserService) GetUser(ctx context.Context, email string) (user.GetUser, error) {
 	userFound, err := us.queries.GetUserByEmail(ctx, email)
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user.GetUser{}, ErrUserNotFound
@@ -121,7 +118,6 @@ func (us *UserService) UpdateBio(ctx context.Context, email, bio string) error {
 		Email: email,
 		Bio:   bio,
 	})
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrUserNotFound
@@ -129,5 +125,33 @@ func (us *UserService) UpdateBio(ctx context.Context, email, bio string) error {
 		return err
 	}
 
+	return nil
+}
+
+func (us *UserService) UploadProfilePhoto(ctx context.Context, email, objectName string) error {
+	err := us.queries.UpdateProfilePhoto(ctx, db.UpdateProfilePhotoParams{
+		ProfilePicture: objectName,
+		Email:          email,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
+	return nil
+}
+
+func (us *UserService) UploadBanner(ctx context.Context, email, objectName string) error {
+	err := us.queries.UpdateBannerPhoto(ctx, db.UpdateBannerPhotoParams{
+		BannerPicture: objectName,
+		Email:         email,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrUserNotFound
+		}
+		return err
+	}
 	return nil
 }

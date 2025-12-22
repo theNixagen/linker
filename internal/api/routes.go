@@ -19,6 +19,8 @@ func (api API) BindRoutes() {
 		r.Route("/profile", func(r chi.Router) {
 			r.Get("/", api.GetProfile)
 			r.Put("/", api.UpdateBio)
+			r.Put("/photo", api.UploadProfilePicture)
+			r.Put("/banner", api.UploadBanner)
 		})
 	})
 }

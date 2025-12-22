@@ -21,7 +21,6 @@ func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := api.UserService.GetUser(r.Context(), userClaims.Email)
-
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
@@ -74,6 +73,88 @@ func (api *API) UpdateBio(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "user not found",
 		})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (api *API) UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
+	claims, ok := GetTokenClaims(r.Context())
+
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	file, header, err := r.FormFile("photo")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	defer file.Close()
+
+	info, err := api.FileService.PutObject(r.Context(), header.Filename, file, header.Size)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = api.UserService.UploadProfilePhoto(r.Context(), claims.Email, info.Key)
+	if err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (api *API) UploadBanner(w http.ResponseWriter, r *http.Request) {
+	claims, ok := GetTokenClaims(r.Context())
+
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	file, header, err := r.FormFile("photo")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	defer file.Close()
+
+	info, err := api.FileService.PutObject(r.Context(), header.Filename, file, header.Size)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = api.UserService.UploadBanner(r.Context(), claims.Email, info.Key)
+	if err != nil {
+		if errors.Is(err, services.ErrUserNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

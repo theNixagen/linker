@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/minio/minio-go/v7"
@@ -42,4 +43,12 @@ func (fs FileService) CreateBucketIfNotExists(ctx context.Context) bool {
 		return true
 	}
 	return false
+}
+
+func (fs FileService) PutObject(ctx context.Context, fileName string, file io.Reader, size int64) (minio.UploadInfo, error) {
+	info, err := fs.MinioClient.PutObject(ctx, fs.BucketName, fileName, file, size, minio.PutObjectOptions{})
+	if err != nil {
+		return minio.UploadInfo{}, err
+	}
+	return info, nil
 }
