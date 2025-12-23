@@ -45,7 +45,8 @@ func main() {
 	api := api.API{
 		Router:      r,
 		Validator:   validator.New(validator.WithRequiredStructEnabled()),
-		UserService: services.NewUserService(pool, jwtSecret),
+		UserService: services.NewUserService(pool),
+		AuthService: services.NewAuthService(pool, jwtSecret),
 		JwtSecret:   jwtSecret,
 		FileService: file_service,
 	}
