@@ -31,6 +31,24 @@ func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	profileURL, err := api.FileService.GetSignedURL(r.Context(), profile.ProfilePicture, api.FileService.BucketName)
+	if err != nil {
+		profile.ProfilePicture = ""
+	}
+
+	bannerURL, err := api.FileService.GetSignedURL(r.Context(), profile.BannerPicture, api.FileService.BucketName)
+	if err != nil {
+		profile.BannerPicture = ""
+	}
+
+	if profileURL != nil {
+		profile.ProfilePicture = profileURL.String()
+	}
+
+	if bannerURL != nil {
+		profile.BannerPicture = bannerURL.String()
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(profile)
 }

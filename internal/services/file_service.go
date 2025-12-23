@@ -2,9 +2,12 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net/url"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -51,4 +54,13 @@ func (fs FileService) PutObject(ctx context.Context, fileName string, file io.Re
 		return minio.UploadInfo{}, err
 	}
 	return info, nil
+}
+
+func (fs FileService) GetSignedURL(ctx context.Context, key, bucket string) (*url.URL, error) {
+	url, err := fs.MinioClient.PresignedGetObject(ctx, bucket, key, time.Minute*15, url.Values{})
+	if err != nil {
+		return nil, errors.New("failed to generate signed url")
+	}
+
+	return url, nil
 }
