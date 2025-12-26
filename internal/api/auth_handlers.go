@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/theNixagen/linker/internal/domain/user"
@@ -37,6 +38,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+		println(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "internal server error",
@@ -69,7 +71,8 @@ func (api *API) AuthUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := api.AuthService.AuthUser(r.Context(), user.Username, user.Password)
+	token, refreshToken, err := api.AuthService.AuthUser(r.Context(), user.Username, user.Password)
+
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidCredentials) {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -84,6 +87,46 @@ func (api *API) AuthUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/users/refresh-session",
+		MaxAge:   24 * 60 * 60,
+	})
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+	})
+}
+
+func (api *API) RefreshSession(w http.ResponseWriter, r *http.Request) {
+	refreshTokenCookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	token, refreshToken, err := api.AuthService.RefreshSession(r.Context(), refreshTokenCookie.Value)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/users/refresh-session",
+		MaxAge:   24 * 60 * 60,
+	})
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{

@@ -35,10 +35,12 @@ func main() {
 
 	r := chi.NewMux()
 	jwtSecret := os.Getenv("JWT_SECRET")
+	refreshSecret := os.Getenv("REFRESH_SECRET")
 	bucket_name := os.Getenv("BUCKET")
 	minio_url := os.Getenv("MINIO_URL")
 	minio_user := os.Getenv("MINIO_USER")
 	minio_passwd := os.Getenv("MINIO_PASSWORD")
+	redis_addr := os.Getenv("REDIS_ADDR")
 	file_service := services.NewFileService(bucket_name, minio_url, minio_user, minio_passwd)
 	file_service.CreateBucketIfNotExists(ctx)
 
@@ -46,7 +48,7 @@ func main() {
 		Router:      r,
 		Validator:   validator.New(validator.WithRequiredStructEnabled()),
 		UserService: services.NewUserService(pool),
-		AuthService: services.NewAuthService(pool, jwtSecret),
+		AuthService: services.NewAuthService(pool, redis_addr, jwtSecret, refreshSecret),
 		JwtSecret:   jwtSecret,
 		FileService: file_service,
 	}

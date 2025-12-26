@@ -21,8 +21,8 @@ type UserService struct {
 	queries *db.Queries
 }
 
-func NewUserService(pool *pgxpool.Pool) UserService {
-	return UserService{
+func NewUserService(pool *pgxpool.Pool) *UserService {
+	return &UserService{
 		pool:    pool,
 		queries: db.New(pool),
 	}
@@ -37,6 +37,7 @@ func (us *UserService) GetUser(ctx context.Context, username string) (user.GetUs
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user.GetUser{}, ErrUserNotFound
 		}
+
 		return user.GetUser{}, err
 	}
 

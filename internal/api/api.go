@@ -7,10 +7,11 @@ import (
 )
 
 type API struct {
-	Router      *chi.Mux
-	Validator   *validator.Validate
-	UserService services.UserService
-	AuthService services.AuthService
-	FileService services.FileService
-	JwtSecret   string
+	Router       *chi.Mux
+	Validator    *validator.Validate
+	UserService  *services.UserService
+	AuthService  *services.AuthService
+	FileService  *services.FileService
+	RedisService *services.RedisService
+	JwtSecret    string
 }

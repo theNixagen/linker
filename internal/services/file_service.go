@@ -18,7 +18,7 @@ type FileService struct {
 	MinioClient *minio.Client
 }
 
-func NewFileService(bucketName, minioUrl, minioUser, minioPasswd string) FileService {
+func NewFileService(bucketName, minioUrl, minioUser, minioPasswd string) *FileService {
 	minioClient, err := minio.New(minioUrl, &minio.Options{
 		Creds: credentials.NewStaticV4(minioUser, minioPasswd, ""),
 	})
@@ -26,13 +26,13 @@ func NewFileService(bucketName, minioUrl, minioUser, minioPasswd string) FileSer
 		fmt.Println(err)
 		log.Fatalf("Failed to initialize minio client: %v", err)
 	}
-	return FileService{
+	return &FileService{
 		BucketName:  bucketName,
 		MinioClient: minioClient,
 	}
 }
 
-func (fs FileService) CreateBucketIfNotExists(ctx context.Context) bool {
+func (fs *FileService) CreateBucketIfNotExists(ctx context.Context) bool {
 	ok, err := fs.MinioClient.BucketExists(ctx, fs.BucketName)
 	if err != nil {
 		fmt.Println(err)
@@ -48,7 +48,7 @@ func (fs FileService) CreateBucketIfNotExists(ctx context.Context) bool {
 	return false
 }
 
-func (fs FileService) PutObject(ctx context.Context, fileName string, file io.Reader, size int64) (minio.UploadInfo, error) {
+func (fs *FileService) PutObject(ctx context.Context, fileName string, file io.Reader, size int64) (minio.UploadInfo, error) {
 	info, err := fs.MinioClient.PutObject(ctx, fs.BucketName, fileName, file, size, minio.PutObjectOptions{})
 	if err != nil {
 		return minio.UploadInfo{}, err
@@ -56,7 +56,7 @@ func (fs FileService) PutObject(ctx context.Context, fileName string, file io.Re
 	return info, nil
 }
 
-func (fs FileService) GetSignedURL(ctx context.Context, key, bucket string) (*url.URL, error) {
+func (fs *FileService) GetSignedURL(ctx context.Context, key, bucket string) (*url.URL, error) {
 	url, err := fs.MinioClient.PresignedGetObject(ctx, bucket, key, time.Minute*15, url.Values{})
 	if err != nil {
 		return nil, errors.New("failed to generate signed url")
