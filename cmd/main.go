@@ -15,6 +15,9 @@ import (
 	"github.com/theNixagen/linker/internal/services"
 )
 
+// @title Linker API
+// @version 1.0
+// @description API do Linker, uma plataforma para gerenciamento de links e perfis personalizados.
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Aviso: arquivo .env não encontrado, usando variáveis de ambiente do sistema")

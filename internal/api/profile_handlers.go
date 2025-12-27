@@ -12,6 +12,15 @@ import (
 	"github.com/theNixagen/linker/internal/services"
 )
 
+// GetProfile godoc
+// @Summary      Busca um perfil pelo nome de usuario
+// @Tags         profile
+// @Produce      json
+// @Param        username  path      string  true  "username"
+// @Success      200  {object}  user.GetUser
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /profile/{username} [get]
 func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 	user := chi.URLParam(r, "username")
 

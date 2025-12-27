@@ -8,6 +8,7 @@ Após a conclusão da primeira API em Go, o projeto evoluiu para um objetivo mai
 > Criar a **mesma API** implementada em **diferentes linguagens**, usando todas as linguagens com as quais eu já desenvolvi pelo menos uma API.
 
 A ideia é comparar abordagens, padrões, desempenho e experiência de desenvolvimento entre linguagens e frameworks distintos, mantendo o mesmo domínio de negócio.
+A medida que eu terminar os outros projetos vou colocando os links aqui.
 
 ---
 

@@ -1,0 +1,66 @@
+components:
+  schemas:
+    user.GetUser:
+      properties:
+        banner_picture:
+          type: string
+        bio:
+          type: string
+        created_at:
+          type: string
+        email:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+        profile_picture:
+          type: string
+        username:
+          type: string
+      type: object
+externalDocs:
+  description: ""
+  url: ""
+info:
+  description: API do Linker, uma plataforma para gerenciamento de links e perfis
+    personalizados.
+  title: Linker API
+  version: "1.0"
+openapi: 3.1.0
+paths:
+  /profile/{username}:
+    get:
+      parameters:
+      - description: username
+        in: path
+        name: username
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user.GetUser'
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: Internal Server Error
+      summary: Busca um perfil pelo nome de usuario
+      tags:
+      - profile
