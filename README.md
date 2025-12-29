@@ -2,13 +2,7 @@
 
 **Linker** é uma API para um aplicativo clone do **Linktree / Beacons**, permitindo que usuários centralizem múltiplos links em uma única página.
 
-O projeto começou como um MVP simples para praticar **Go** e aprender **Vue.js**, já que esse tipo de aplicação tem uma complexidade inicial baixa.  
-Após a conclusão da primeira API em Go, o projeto evoluiu para um objetivo maior:
-
-> Criar a **mesma API** implementada em **diferentes linguagens**, usando todas as linguagens com as quais eu já desenvolvi pelo menos uma API.
-
-A ideia é comparar abordagens, padrões, desempenho e experiência de desenvolvimento entre linguagens e frameworks distintos, mantendo o mesmo domínio de negócio.
-A medida que eu terminar os outros projetos vou colocando os links aqui.
+O projeto começou como um MVP simples para praticar **Go** e **React**, já que esse tipo de aplicação tem uma complexidade inicial baixa.  
 
 ---
 
@@ -17,9 +11,9 @@ A medida que eu terminar os outros projetos vou colocando os links aqui.
 A aplicação utiliza uma arquitetura baseada em serviços externos, todos gerenciados via **Docker Compose**:
 
 - **PostgreSQL** — banco de dados relacional
-- **Redis** — cache e possíveis filas
+- **Redis** — cache
 - **MinIO** — storage compatível com S3 (ex: imagens de perfil)
-- **API** — implementada em múltiplas linguagens (Go, etc.)
+- **API** — implementada em Go
 
 ---
 
