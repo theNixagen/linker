@@ -12,12 +12,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/theNixagen/linker/internal/api"
+	"github.com/theNixagen/linker/internal/repositories/links_repository"
+	"github.com/theNixagen/linker/internal/repositories/user_repository"
 	"github.com/theNixagen/linker/internal/services"
 )
 
 // @title Linker API
 // @version 1.0
 // @description API do Linker, uma plataforma para gerenciamento de links e perfis personalizados.
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Aviso: arquivo .env não encontrado, usando variáveis de ambiente do sistema")
@@ -46,14 +52,17 @@ func main() {
 	redis_addr := os.Getenv("REDIS_ADDR")
 	file_service := services.NewFileService(bucket_name, minio_url, minio_user, minio_passwd)
 	file_service.CreateBucketIfNotExists(ctx)
+	dbUserRepository := user_repository.NewDbUserRepository(pool)
+	links_repository := links_repository.NewDbLinksRepository(pool)
 
 	api := api.API{
-		Router:      r,
-		Validator:   validator.New(validator.WithRequiredStructEnabled()),
-		UserService: services.NewUserService(pool),
-		AuthService: services.NewAuthService(pool, redis_addr, jwtSecret, refreshSecret),
-		JwtSecret:   jwtSecret,
-		FileService: file_service,
+		Router:       r,
+		Validator:    validator.New(validator.WithRequiredStructEnabled()),
+		UserService:  services.NewUserService(dbUserRepository, pool),
+		LinksService: services.NewLinksService(dbUserRepository, links_repository),
+		AuthService:  services.NewAuthService(pool, redis_addr, jwtSecret, refreshSecret, dbUserRepository),
+		JwtSecret:    jwtSecret,
+		FileService:  file_service,
 	}
 
 	server := &http.Server{

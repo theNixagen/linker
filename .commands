@@ -1,0 +1,2 @@
+- swag init -g main.go -d cmd,internal/api,internal/domain,internal/db -o docs --parseInternal --parseDepth 10 --v3.1
+- air -c .air.toml

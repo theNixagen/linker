@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/theNixagen/linker/internal/db"
 	"github.com/theNixagen/linker/internal/domain/links"
 	"github.com/theNixagen/linker/internal/domain/user"
-	"github.com/theNixagen/linker/internal/services"
+	"github.com/theNixagen/linker/internal/repositories/links_repository"
+	"github.com/theNixagen/linker/internal/repositories/user_repository"
 )
 
 // GetProfile godoc
@@ -26,7 +26,7 @@ func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	profile, err := api.UserService.GetUser(r.Context(), user)
 	if err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
+		if errors.Is(err, user_repository.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(map[string]string{
 				"message": "user not found",
@@ -62,6 +62,19 @@ func (api *API) GetProfile(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(profile)
 }
 
+// UpdateBio godoc
+// @Summary      Atualiza a bio de um perfil
+// @Tags         profile
+// @Produce      json
+// @Accept       json
+// @Param        request  body  user.UpdateBioRequest  true  "payload"
+// @Security BearerAuth
+// @Success      204  {object}  nil
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      422  {object}  map[string]string
+// @Router       /profile/bio [put]
 func (api *API) UpdateBio(w http.ResponseWriter, r *http.Request) {
 	userClaims, ok := GetTokenClaims(r.Context())
 
@@ -84,7 +97,7 @@ func (api *API) UpdateBio(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := api.UserService.UpdateBio(r.Context(), userClaims.Username, req.Bio); err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
+		if errors.Is(err, user_repository.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(map[string]string{
 				"message": "user not found",
@@ -101,6 +114,19 @@ func (api *API) UpdateBio(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// UpdatePhoto godoc
+// @Summary      Atualiza a foto de perfil
+// @Tags         profile
+// @Produce      json
+// @Accept       multipart/form-data
+// @Param        photo  formData  file  true  "Imagem (jpg/png/webp)"
+// @Security BearerAuth
+// @Success      204  {object}  nil
+// @Failure      404  {object}  nil
+// @Failure      500  {object}  nil
+// @Failure      401  {object}  nil
+// @Failure      422  {object}  nil
+// @Router       /profile/photo [put]
 func (api *API) UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
 	claims, ok := GetTokenClaims(r.Context())
 
@@ -131,7 +157,7 @@ func (api *API) UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
 
 	err = api.UserService.UploadProfilePhoto(r.Context(), claims.Username, info.Key)
 	if err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
+		if errors.Is(err, user_repository.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -142,6 +168,19 @@ func (api *API) UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// UpdateBanner godoc
+// @Summary      Atualiza a foto de banner
+// @Tags         profile
+// @Produce      json
+// @Accept       multipart/form-data
+// @Param        photo  formData  file  true  "Imagem (jpg/png/webp)"
+// @Security BearerAuth
+// @Success      204  {object}  nil
+// @Failure      404  {object}  nil
+// @Failure      500  {object}  nil
+// @Failure      401  {object}  nil
+// @Failure      422  {object}  nil
+// @Router       /profile/banner [put]
 func (api *API) UploadBanner(w http.ResponseWriter, r *http.Request) {
 	claims, ok := GetTokenClaims(r.Context())
 
@@ -172,7 +211,7 @@ func (api *API) UploadBanner(w http.ResponseWriter, r *http.Request) {
 
 	err = api.UserService.UploadBanner(r.Context(), claims.Username, info.Key)
 	if err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
+		if errors.Is(err, user_repository.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -183,6 +222,19 @@ func (api *API) UploadBanner(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// CreateLink godoc
+// @Summary      Cria um novo link para um usuário autenticado
+// @Tags         profile
+// @Produce      json
+// @Accept       json
+// @Param        request  body  links.CreateLink  true  "payload"
+// @Security BearerAuth
+// @Success      204  {object}  nil
+// @Failure      404  {object}  nil
+// @Failure      500  {object}  nil
+// @Failure      401  {object}  nil
+// @Failure      422  {object}  nil
+// @Router       /profile/link [post]
 func (api *API) CreateNewLink(w http.ResponseWriter, r *http.Request) {
 	var link links.CreateLink
 
@@ -206,9 +258,9 @@ func (api *API) CreateNewLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := api.UserService.CreateLink(r.Context(), claims.Username, link.URL, link.Title, link.Description)
+	err := api.LinksService.CreateLink(r.Context(), claims.Username, link.URL, link.Title, link.Description)
 	if err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
+		if errors.Is(err, user_repository.ErrUserNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -219,12 +271,21 @@ func (api *API) CreateNewLink(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// GetUserLinks godoc
+// @Summary      Busca os links de um usuario
+// @Tags         profile
+// @Produce      json
+// @Param        username  path      string  true  "username"
+// @Success      200  {object}  user.GetUser
+// @Failure      404  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /profile/links/{username} [get]
 func (api *API) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 	username := chi.URLParam(r, "username")
 
-	links, err := api.UserService.GetAllLinksFromAUser(r.Context(), username)
+	links, err := api.LinksService.GetAllLinksFromAUser(r.Context(), username)
 	if err != nil {
-		if errors.Is(err, services.ErrLinksNotFound) {
+		if errors.Is(err, links_repository.ErrLinksNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -233,7 +294,7 @@ func (api *API) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string][]db.Link{
+	json.NewEncoder(w).Encode(map[string]any{
 		"links": links,
 	})
 }

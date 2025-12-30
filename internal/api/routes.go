@@ -41,7 +41,7 @@ func (api *API) BindRoutes() {
 	r.Route("/profile", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(api.AuthMiddleware)
-			r.Put("/", api.UpdateBio)
+			r.Put("/bio", api.UpdateBio)
 			r.Put("/photo", api.UploadProfilePicture)
 			r.Put("/banner", api.UploadBanner)
 			r.Post("/link", api.CreateNewLink)

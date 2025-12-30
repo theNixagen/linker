@@ -9,35 +9,36 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/theNixagen/linker/internal/db"
 	"github.com/theNixagen/linker/internal/domain/auth"
 	"github.com/theNixagen/linker/internal/domain/user"
+	"github.com/theNixagen/linker/internal/repositories/user_repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	ErrDuplicatedEmail    = errors.New("email already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 type AuthService struct {
-	pool          *pgxpool.Pool
-	queries       *db.Queries
-	redisService  *RedisService
-	jwtSecret     string
-	refreshSecret string
+	pool           *pgxpool.Pool
+	queries        *db.Queries
+	redisService   *RedisService
+	userRepository user_repository.UserRepository
+	jwtSecret      string
+	refreshSecret  string
 }
 
-func NewAuthService(pool *pgxpool.Pool, redisAddr, jwtSecret, refreshSecret string) *AuthService {
+func NewAuthService(pool *pgxpool.Pool, redisAddr, jwtSecret, refreshSecret string, userRepository user_repository.UserRepository) *AuthService {
 	return &AuthService{
-		pool:          pool,
-		queries:       db.New(pool),
-		redisService:  NewRedisService(redisAddr),
-		jwtSecret:     jwtSecret,
-		refreshSecret: refreshSecret,
+		pool:           pool,
+		queries:        db.New(pool),
+		userRepository: userRepository,
+		redisService:   NewRedisService(redisAddr),
+		jwtSecret:      jwtSecret,
+		refreshSecret:  refreshSecret,
 	}
 }
 
@@ -48,20 +49,14 @@ func (as *AuthService) CreateUser(ctx context.Context, user user.CreateUser) (in
 		return 0, err
 	}
 
-	id, err := as.queries.CreateUser(ctx, db.CreateUserParams{
+	id, err := as.userRepository.Create(ctx, user_repository.User{
 		Email:    user.Email,
-		Name:     pgtype.Text{String: user.Name, Valid: true},
-		Username: pgtype.Text{String: user.Username, Valid: true},
+		Name:     user.Name,
+		Username: user.Username,
 		Password: string(hashedPassword),
 	})
+
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.ColumnName == "email" && pgErr.Code == "23505" {
-				return 0, ErrDuplicatedEmail
-			}
-			return 0, errors.New("could not insert user")
-		}
 		return 0, err
 	}
 
@@ -103,10 +98,7 @@ func (as *AuthService) generateToken(ctx context.Context, user db.User) (string,
 }
 
 func (as *AuthService) AuthUser(ctx context.Context, username, password string) (string, string, error) {
-	user, err := as.queries.GetUserByUsername(ctx, pgtype.Text{
-		String: username,
-		Valid:  true,
-	})
+	user, err := as.userRepository.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", "", ErrInvalidCredentials
@@ -121,7 +113,12 @@ func (as *AuthService) AuthUser(ctx context.Context, username, password string) 
 		return "", "", err
 	}
 
-	tokenString, refreshTokenString, err := as.generateToken(ctx, user)
+	tokenString, refreshTokenString, err := as.generateToken(ctx, db.User{
+		ID:       user.ID,
+		Email:    user.Email,
+		Name:     pgtype.Text{String: user.Name, Valid: true},
+		Username: pgtype.Text{String: user.Username, Valid: true},
+	})
 
 	if err != nil {
 		return "", "", err
@@ -162,12 +159,14 @@ func (as *AuthService) RefreshSession(ctx context.Context, tokenStr string) (str
 		return "", "", errors.New("token uuid does not match")
 	}
 
-	user, err := as.queries.GetUserByUsername(ctx, pgtype.Text{
-		String: claims.Sub,
-		Valid:  true,
-	})
+	user, err := as.userRepository.GetUserByUsername(ctx, claims.Sub)
 
-	tokenString, refreshTokenString, err := as.generateToken(ctx, user)
+	tokenString, refreshTokenString, err := as.generateToken(ctx, db.User{
+		ID:       user.ID,
+		Email:    user.Email,
+		Name:     pgtype.Text{String: user.Name, Valid: true},
+		Username: pgtype.Text{String: user.Username, Valid: true},
+	})
 
 	if err != nil {
 		return "", "", err

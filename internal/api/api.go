@@ -10,6 +10,7 @@ type API struct {
 	Router       *chi.Mux
 	Validator    *validator.Validate
 	UserService  *services.UserService
+	LinksService *services.LinksService
 	AuthService  *services.AuthService
 	FileService  *services.FileService
 	RedisService *services.RedisService

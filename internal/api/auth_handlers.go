@@ -7,9 +7,22 @@ import (
 	"net/http"
 
 	"github.com/theNixagen/linker/internal/domain/user"
+	"github.com/theNixagen/linker/internal/repositories/user_repository"
 	"github.com/theNixagen/linker/internal/services"
 )
 
+// CreateUser godoc
+// @Summary      Cria um novo usuario
+// @Tags         auth
+// @Produce      json
+// @Accept       json
+// @Param        request  body  user.CreateUser  true  "payload"
+// @Success      201  {object}  map[string]int
+// @Failure      409  {object}  map[string]any
+// @Failure      500  {object}  nil
+// @Failure      400  {object}  map[string]any
+// @Failure      422  {object}  map[string]string
+// @Router       /users [post]
 func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user user.CreateUser
 
@@ -31,10 +44,10 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	id, err := api.AuthService.CreateUser(r.Context(), user)
 	if err != nil {
-		if errors.Is(err, services.ErrDuplicatedEmail) {
+		if errors.Is(err, user_repository.ErrDuplicatedEmail) || errors.Is(err, user_repository.ErrDuplicatedUsername) {
 			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(map[string]string{
-				"message": "email already exists",
+				"message": err.Error(),
 			})
 			return
 		}
@@ -52,6 +65,18 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// login godoc
+// @Summary      autentica um usuário
+// @Tags         auth
+// @Produce      json
+// @Accept       json
+// @Param        request  body  user.AuthUser  true  "payload"
+// @Success      200  {object}  map[string]string
+// @Failure      500  {object}  nil
+// @Failure      401  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      422  {object}  map[string]string
+// @Router       /users/login [post]
 func (api *API) AuthUser(w http.ResponseWriter, r *http.Request) {
 	var user user.AuthUser
 
