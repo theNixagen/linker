@@ -3,23 +3,17 @@ package services
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/theNixagen/linker/internal/db"
 	"github.com/theNixagen/linker/internal/domain/user"
 	"github.com/theNixagen/linker/internal/repositories/user_repository"
 )
 
 type UserService struct {
 	UserRepository user_repository.UserRepository
-	pool           *pgxpool.Pool
-	queries        *db.Queries
 }
 
-func NewUserService(userRepository user_repository.UserRepository, pool *pgxpool.Pool) *UserService {
+func NewUserService(userRepository user_repository.UserRepository) *UserService {
 	return &UserService{
 		UserRepository: userRepository,
-		pool:           pool,
-		queries:        db.New(pool),
 	}
 }
 

@@ -13,6 +13,5 @@ type API struct {
 	LinksService *services.LinksService
 	AuthService  *services.AuthService
 	FileService  *services.FileService
-	RedisService *services.RedisService
 	JwtSecret    string
 }

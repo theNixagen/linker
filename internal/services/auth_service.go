@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/theNixagen/linker/internal/db"
 	"github.com/theNixagen/linker/internal/domain/auth"
 	"github.com/theNixagen/linker/internal/domain/user"
+	"github.com/theNixagen/linker/internal/repositories/cache_repository"
 	"github.com/theNixagen/linker/internal/repositories/user_repository"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,22 +23,18 @@ var (
 )
 
 type AuthService struct {
-	pool           *pgxpool.Pool
-	queries        *db.Queries
-	redisService   *RedisService
-	userRepository user_repository.UserRepository
-	jwtSecret      string
-	refreshSecret  string
+	cacheRepository cache_repository.CacheRepository
+	userRepository  user_repository.UserRepository
+	jwtSecret       string
+	refreshSecret   string
 }
 
-func NewAuthService(pool *pgxpool.Pool, redisAddr, jwtSecret, refreshSecret string, userRepository user_repository.UserRepository) *AuthService {
+func NewAuthService(jwtSecret, refreshSecret string, userRepository user_repository.UserRepository, cacheRepository cache_repository.CacheRepository) *AuthService {
 	return &AuthService{
-		pool:           pool,
-		queries:        db.New(pool),
-		userRepository: userRepository,
-		redisService:   NewRedisService(redisAddr),
-		jwtSecret:      jwtSecret,
-		refreshSecret:  refreshSecret,
+		userRepository:  userRepository,
+		cacheRepository: cacheRepository,
+		jwtSecret:       jwtSecret,
+		refreshSecret:   refreshSecret,
 	}
 }
 
@@ -74,7 +70,7 @@ func (as *AuthService) generateToken(ctx context.Context, user db.User) (string,
 
 	uuid := uuid.NewString()
 
-	as.redisService.Set(ctx, fmt.Sprintf("uuid:%s", user.Username.String), uuid, time.Hour*24)
+	as.cacheRepository.Set(ctx, fmt.Sprintf("uuid:%s", user.Username.String), uuid, time.Hour*24)
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Username,
@@ -149,7 +145,7 @@ func (as *AuthService) RefreshSession(ctx context.Context, tokenStr string) (str
 		return "", "", errors.New("invalid token claims")
 	}
 
-	uuid, err := as.redisService.Get(ctx, fmt.Sprintf("uuid:%s", claims.Sub))
+	uuid, err := as.cacheRepository.Get(ctx, fmt.Sprintf("uuid:%s", claims.Sub))
 
 	if err != nil {
 		return "", "", errors.New("invalid token uuid")

@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/theNixagen/linker/internal/api"
+	"github.com/theNixagen/linker/internal/repositories/cache_repository"
 	"github.com/theNixagen/linker/internal/repositories/links_repository"
 	"github.com/theNixagen/linker/internal/repositories/user_repository"
 	"github.com/theNixagen/linker/internal/services"
@@ -52,15 +53,16 @@ func main() {
 	redis_addr := os.Getenv("REDIS_ADDR")
 	file_service := services.NewFileService(bucket_name, minio_url, minio_user, minio_passwd)
 	file_service.CreateBucketIfNotExists(ctx)
-	dbUserRepository := user_repository.NewDbUserRepository(pool)
-	links_repository := links_repository.NewDbLinksRepository(pool)
+	UsersRepository := user_repository.NewDbUserRepository(pool)
+	linksRepository := links_repository.NewDbLinksRepository(pool)
+	redisRepostory := cache_repository.NewRedisCacheRepository(redis_addr)
 
 	api := api.API{
 		Router:       r,
 		Validator:    validator.New(validator.WithRequiredStructEnabled()),
-		UserService:  services.NewUserService(dbUserRepository, pool),
-		LinksService: services.NewLinksService(dbUserRepository, links_repository),
-		AuthService:  services.NewAuthService(pool, redis_addr, jwtSecret, refreshSecret, dbUserRepository),
+		UserService:  services.NewUserService(UsersRepository),
+		LinksService: services.NewLinksService(UsersRepository, linksRepository),
+		AuthService:  services.NewAuthService(jwtSecret, refreshSecret, UsersRepository, redisRepostory),
 		JwtSecret:    jwtSecret,
 		FileService:  file_service,
 	}
