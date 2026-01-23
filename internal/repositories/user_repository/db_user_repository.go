@@ -3,6 +3,7 @@ package user_repository
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -36,6 +37,7 @@ func (r *DbUserRepository) Create(ctx context.Context, user User) (int32, error)
 	})
 
 	if err != nil {
+		fmt.Println(err)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
